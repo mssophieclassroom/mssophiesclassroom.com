@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+  <html lang="en">
+  <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>Miss Sophie's Classroom</title>
+  <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+  <div class="stars"></div>
+  <div class="page" id="app">
+  <div class="bunting" aria-hidden="true">
+  <div class="flag" style="border-bottom:26px solid #FF6EB4"></div>
+  <div class="flag" style="border-bottom:26px solid #9B59B6"></div>
+  <div class="flag" style="border-bottom:26px solid #FFD700"></div>
+  <div class="flag" style="border-bottom:26px solid #74B9FF"></div>
+  <div class="flag" style="border-bottom:26px solid #55EFC4"></div>
+  <div class="flag" style="border-bottom:26px solid #FF6EB4"></div>
+  <div class="flag" style="border-bottom:26px solid #9B59B6"></div>
+  <div class="flag" style="border-bottom:26px solid #FFD700"></div>
+  <div class="flag" style="border-bottom:26px solid #74B9FF"></div>
+  <div class="flag" style="border-bottom:26px solid #55EFC4"></div>
+  <div class="flag" style="border-bottom:26px solid #FF6EB4"></div>
+  <div class="flag" style="border-bottom:26px solid #9B59B6"></div>
+  </div>
+  <h1 class="logo-title">Miss Sophie's Classroom</h1>
+  <p class="logo-sub">Learning is magical!</p>
+
+  <div id="screen-profiles">
+  <p style="font-size:1.1rem;font-weight:700;color:#9B59B6;margin-bottom:8px;">Who's learning today?</p>
+  <div class="profiles">
+  <div class="profile-card" onclick="selectChild('Milla',6,'')">
+  <div class="profile-avatar"></div>
+  <div class="profile-name">Milla</div>
+  <div class="profile-age">Age 6</div>
+  </div>
+  <div class="profile-card add-profile" onclick="alert('More children coming soon!')">
+  <div class="profile-avatar" style="font-size:3rem;">+</div>
+  <div class="profile-name" style="color:inherit;">Add child</div>
+  <div class="profile-age">coming soon</div>
+  </div>
+  </div>
+  <div class="sophie-wrap mt-10">
+  <img src="ms_sophie.png" alt="Miss Sophie" class="sophie-img" onerror="this.style.display='none'">
+  </div>
+  </div>
+
+  <div id="screen-greeting" class="hidden">
+  <div class="sophie-wrap">
+  <img src="ms_sophie.png" alt="Miss Sophie" class="sophie-img" onerror="this.style.display='none'">
+  <div class="sophie-bubble" id="greeting-bubble">Hi! Just a moment...</div>
+  </div>
+  <div id="child-stars-display" style="font-size:1.1rem;font-weight:800;color:#9B59B6;margin:8px 0;"></div>
+  </div>
+
+  <div id="screen-subjects" class="hidden">
+  <div class="sophie-wrap">
+  <img src="ms_sophie.png" alt="Miss Sophie" class="sophie-img" style="width:min(160px,38vw)" onerror="this.style.display='none'">
+  <div class="sophie-bubble" id="subject-bubble">What would you like to learn?</div>
+  </div>
+  <div class="score-bar" id="stars-bar">
+  <span class="star-icon"></span>
+  <span id="stars-count">0</span> stars
+  </div>
+  <div class="subject-grid">
+  <a href="maths.html" class="subject-btn">
+  <span class="icon"></span>
+  <span class="label">Maths</span>
+  </a>
+  <a href="handwriting.html" class="subject-btn">
+  <span class="icon"></span>
+  <span class="label">Handwriting</span>
+  </a>
+  <a href="reading.html" class="subject-btn">
+  <span class="icon"></span>
+  <span class="label">Reading & Phonics</span>
+  </a>
+  <a href="spelling.html" class="subject-btn">
+  <span class="icon"></span>
+  <span class="label">Spelling</span>
+  </a>
+  </div>
+  <button class="big-btn alt mt-10" onclick="switchChild()" style="max-width:220px;padding:14px 20px;font-size:1rem;">Switch child</button>
+  </div>
+  </div>
+
+  <div class="sparkle-cat" id="sparkle" onclick="sparkleClick()" title="Sparkle the cat!"></div>
+
+  <script src="sophie.js"></script>
+  <script>
+  let currentChild='';
+  let currentAge=6;
+
+  function selectChild(name,age,emoji){
+      currentChild=name;currentAge=age;
+  setCurrentChild(name,age);
+  Sophie.subject='general';
+  document.getElementById('screen-profiles').classList.add('hidden');
+  document.getElementById('screen-greeting').classList.remove('hidden');
+  const data=Progress.getChild(name);
+  document.getElementById('child-stars-display').textContent='Stars: '+data.stars+' | Level: '+data.level;
+  const greeting=`Hi ${name}! Welcome to your classroom! I am so happy to see you today! What would you like to learn?`;
+  document.getElementById('greeting-bubble').textContent=greeting;
+  Voice.speak(greeting,()=>{
+        setTimeout(()=>{
+          document.getElementById('screen-greeting').classList.add('hidden');
+          document.getElementById('screen-subjects').classList.remove('hidden');
+      document.getElementById('stars-count').textContent=data.stars;
+  },800);
+});
+}
+
+function switchChild(){
+    document.getElementById('screen-subjects').classList.add('hidden');
+  document.getElementById('screen-profiles').classList.remove('hidden');
+}
+
+function sparkleClick(){
+    const msgs=['Meow! I am Sparkle!','Purr purr! Keep learning!','Meow! Miss Sophie loves you!'];
+  const msg=msgs[Math.floor(Math.random()*msgs.length)];
+  Voice.speak(msg);
+  const cat=document.getElementById('sparkle');
+  cat.style.transform='scale(1.5)';
+  setTimeout(()=>cat.style.transform='',500);
+    }
+
+initStars(20);
+</script>
+  </body>
+  </html>
