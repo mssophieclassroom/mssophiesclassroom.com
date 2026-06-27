@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0">
+<title>Reading - Miss Sophie's Classroom</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="stars"></div>
+<div class="page">
+<div class="topbar"><h1>Reading</h1><a href="index.html" class="home-btn">Home</a></div>
+<div class="sophie-wrap">
+<img src="ms_sophie.png" alt="Miss Sophie" class="sophie-img" style="width:min(120px,28vw)" onerror="this.style.display='none'">
+<div class="sophie-bubble" id="sophie-msg">Let us read together!</div>
+</div>
+<div class="score-bar"><span class="star-icon"></span><span id="stars-count">0</span> stars</div>
+<div style="display:flex;gap:10px;justify-content:center;margin:8px 0;flex-wrap:wrap">
+<button onclick="setMode('phonics')" class="big-btn" style="max-width:150px;padding:12px;font-size:.95rem">Letter Sounds</button>
+<button onclick="setMode('sightwords')" class="big-btn alt" style="max-width:150px;padding:12px;font-size:.95rem">Sight Words</button>
+<button onclick="setMode('sentences')" class="big-btn green" style="max-width:150px;padding:12px;font-size:.95rem">Sentences</button>
+</div>
+<div class="card">
+<div id="word-display" class="word-display">A</div>
+<div id="word-hint" style="font-size:1.2rem;color:#9B59B6;font-weight:700;margin-bottom:12px"></div>
+<div id="phoneme-row" class="phoneme-row"></div>
+</div>
+<div class="gap-row mt-10">
+<button class="big-btn" onclick="speakCurrent()">Hear it again</button>
+<button class="big-btn green" onclick="nextItem()">Next</button>
+</div>
+<div class="gap-row mt-10">
+<button class="mic-btn" id="mic-btn" onclick="startListening()"></button>
+</div>
+<div class="mic-label" id="mic-label">Tap to speak!</div>
+</div>
+<div class="sparkle-cat" onclick="Voice.speak('Purr! You are a great reader!')"></div>
+<script src="sophie.js"></script>
+<script>
+const child=getCurrentChild();updateScoreDisplay();Sophie.subject='reading and phonics';
+const phonicsData=[
+{letter:'A',sound:'ah',word:'Apple',hint:'A is for Apple'},
+{letter:'B',sound:'buh',word:'Ball',hint:'B is for Ball'},
+{letter:'C',sound:'kuh',word:'Cat',hint:'C is for Cat'},
+{letter:'D',sound:'duh',word:'Dog',hint:'D is for Dog'},
+{letter:'E',sound:'eh',word:'Egg',hint:'E is for Egg'},
+{letter:'F',sound:'fuh',word:'Fish',hint:'F is for Fish'},
+{letter:'G',sound:'guh',word:'Goat',hint:'G is for Goat'},
+{letter:'H',sound:'huh',word:'Hat',hint:'H is for Hat'},
+{letter:'I',sound:'ih',word:'Igloo',hint:'I is for Igloo'},
+{letter:'J',sound:'juh',word:'Jam',hint:'J is for Jam'},
+{letter:'K',sound:'kuh',word:'Kite',hint:'K is for Kite'},
+{letter:'L',sound:'luh',word:'Lion',hint:'L is for Lion'},
+{letter:'M',sound:'muh',word:'Monkey',hint:'M is for Monkey'},
+{letter:'N',sound:'nuh',word:'Nest',hint:'N is for Nest'},
+{letter:'O',sound:'oh',word:'Orange',hint:'O is for Orange'},
+{letter:'P',sound:'puh',word:'Pig',hint:'P is for Pig'},
+{letter:'Q',sound:'kwuh',word:'Queen',hint:'Q is for Queen'},
+{letter:'R',sound:'ruh',word:'Rainbow',hint:'R is for Rainbow'},
+{letter:'S',sound:'suh',word:'Sun',hint:'S is for Sun'},
+{letter:'T',sound:'tuh',word:'Tree',hint:'T is for Tree'},
+{letter:'U',sound:'uh',word:'Umbrella',hint:'U is for Umbrella'},
+{letter:'V',sound:'vuh',word:'Van',hint:'V is for Van'},
+{letter:'W',sound:'wuh',word:'Water',hint:'W is for Water'},
+{letter:'X',sound:'ks',word:'X-ray',hint:'X makes the ks sound'},
+{letter:'Y',sound:'yuh',word:'Yellow',hint:'Y is for Yellow'},
+{letter:'Z',sound:'zuh',word:'Zebra',hint:'Z is for Zebra'},
+];
+const sightWords=['the','and','a','to','is','in','it','of','you','he','she','we','on','at','be','do','go','me','my','no','so','up','us','an','as','if','or','by','was','are','all','one','can','had','her','his','not','but','out','who','get','put','too','see','two','how','did','let','big','run','fun','sun','hat','cat','mat','bat','dog','log','fog','red','bed'];
+const sentences=['The cat sat on the mat.','I can see a big red ball.','The dog ran to the tree.','She has a hat and a bag.','We can go to the park.','He fed the little duck.','The sun is hot today.','I like to hop and run.'];
+let mode='phonics';let currentIndex=0;let items=[];
+function setMode(m){mode=m;currentIndex=0;if(m==='phonics')items=phonicsData;else if(m==='sightwords')items=[...sightWords];else items=[...sentences];loadItem();}
+function loadItem(){
+  const item=items[currentIndex];
+  const wd=document.getElementById('word-display');
+  wd.style.fontSize='';
+  if(mode==='phonics'){
+    wd.textContent=item.letter;
+    document.getElementById('word-hint').textContent=item.hint;
+    const row=document.getElementById('phoneme-row');row.innerHTML='';
+    const btn=document.createElement('button');btn.className='phoneme-btn';btn.textContent=item.word;btn.onclick=()=>Voice.speak(item.word);row.appendChild(btn);
+    Voice.speak('The letter '+item.letter+' makes the '+item.sound+' sound. '+item.hint+'.');
+  } else if(mode==='sightwords'){
+    wd.textContent=item;document.getElementById('word-hint').textContent='Can you read this word?';document.getElementById('phoneme-row').innerHTML='';
+    Voice.speak('The word is: '+item);
+  } else {
+    wd.style.fontSize='clamp(1.1rem,3.5vw,1.6rem)';wd.textContent=item;document.getElementById('word-hint').textContent='Can you read this sentence?';document.getElementById('phoneme-row').innerHTML='';
+    Voice.speak(item);
+  }
+}
+function speakCurrent(){const item=items[currentIndex];if(mode==='phonics')Voice.speak('The letter '+item.letter+' makes the '+item.sound+' sound. '+item.hint+'.');else Voice.speak(typeof item==='string'?item:item.word);}
+function nextItem(){Progress.addStars(child,1);updateScoreDisplay();Progress.addSubjectProgress(child,'reading',1);currentIndex=(currentIndex+1)%items.length;if(currentIndex===0)launchConfetti();loadItem();}
+function startListening(){
+  const btn=document.getElementById('mic-btn');btn.classList.add('listening');document.getElementById('mic-label').textContent='Listening...';
+  Listen.start((t)=>{document.getElementById('sophie-msg').textContent='I heard: '+t;Voice.speak('I heard you say: '+t+'. Great reading '+child+'!');Progress.addStars(child,1);updateScoreDisplay();}
+  ,()=>{btn.classList.remove('listening');document.getElementById('mic-label').textContent='Tap to speak!';});
+}
+initStars(15);setMode('phonics');
+</script>
+</body>
+</html>
