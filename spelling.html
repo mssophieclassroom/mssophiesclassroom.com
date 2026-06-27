@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+  <html lang="en">
+  <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0">
+  <title>Spelling - Miss Sophie's Classroom</title>
+  <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+  <div class="stars"></div>
+  <div class="page">
+  <div class="topbar">
+  <h1>Spelling</h1>
+  <a href="index.html" class="home-btn">Home</a>
+  </div>
+  <div class="sophie-wrap">
+  <img src="ms_sophie.png" alt="Miss Sophie" class="sophie-img" style="width:min(120px,28vw)" onerror="this.style.display='none'">
+  <div class="sophie-bubble" id="sophie-msg">Let us spell some words!</div>
+  </div>
+  <div class="score-bar">
+  <span class="star-icon"></span>
+  <span id="stars-count">0</span> stars
+  </div>
+  <div class="progress-bar-wrap">
+  <div class="progress-bar-fill" id="progress-fill" style="width:0%"></div>
+  </div>
+  <div class="card">
+  <div id="word-emoji" style="font-size:3rem;margin-bottom:8px"></div>
+  <div id="word-hint" style="font-size:1.3rem;font-weight:700;color:#9B59B6;margin-bottom:12px">Tap to hear the word</div>
+<button class="big-btn" onclick="hearWord()" style="max-width:200px;margin:0 auto 16px">Hear the word</button>
+<div class="answer-slots" id="answer-slots"></div>
+</div>
+<div class="letter-tiles" id="letter-tiles"></div>
+  <div class="gap-row mt-10">
+  <button class="big-btn green" onclick="checkSpelling()">Check!</button>
+  <button class="big-btn yellow" onclick="clearAnswer()">Clear</button>
+  </div>
+  <div id="result-msg" style="font-size:1.3rem;font-weight:800;text-align:center;margin-top:12px;min-height:32px"></div>
+  </div>
+  <div class="sparkle-cat" onclick="Voice.speak('Meow! You are a great speller!')"></div>
+  <script src="sophie.js"></script>
+  <script>
+  const child=getCurrentChild();
+updateScoreDisplay();
+Sophie.subject='spelling';
+
+const wordList=[
+{word:'cat',emoji:'',hint:'This animal says meow'},
+  {word:'dog',emoji:'',hint:'This animal says woof'},
+  {word:'sun',emoji:'',hint:'It shines in the sky'},
+  {word:'hat',emoji:'',hint:'You wear it on your head'},
+{word:'red',emoji:'',hint:'The colour of a fire truck'},
+{word:'big',emoji:'',hint:'The opposite of small'},
+  {word:'run',emoji:'',hint:'Moving very fast on your feet'},
+{word:'hop',emoji:'',hint:'What a bunny does'},
+  {word:'sit',emoji:''},
+  {word:'bat',emoji:'',hint:'You use it to hit a ball'},
+{word:'mat',emoji:'',hint:'You wipe your feet on it'},
+{word:'bed',emoji:'',hint:'You sleep in it'},
+  {word:'cup',emoji:'',hint:'You drink from it'},
+{word:'bus',emoji:'',hint:'A big vehicle you ride in'},
+{word:'fun',emoji:'',hint:'The opposite of boring'},
+  {word:'mud',emoji:'',hint:'Wet, dirty earth'},
+  {word:'log',emoji:'',hint:'A piece of cut tree'},
+{word:'fog',emoji:'',hint:'Thick mist in the air'},
+{word:'bee',emoji:'',hint:'It makes honey and can sting'},
+{word:'tree',emoji:'',hint:'It has leaves and branches'},
+];
+
+let currentWord=null;
+let currentIdx=0;
+let userLetters=[];
+
+function shuffle(arr){return [...arr].sort(()=>Math.random()-.5);}
+
+function loadWord(){
+    if(currentIdx>=wordList.length){
+    launchConfetti();
+    const msg=`Fantastic ${child}! You spelled all the words! You are an amazing speller!`;
+    document.getElementById('sophie-msg').textContent=msg;
+    Voice.speak(msg);
+    document.getElementById('progress-fill').style.width='100%';
+    return;
+}
+  currentWord=wordList[currentIdx];
+  userLetters=new Array(currentWord.word.length).fill('');
+  document.getElementById('progress-fill').style.width=((currentIdx/wordList.length)*100)+'%';
+  document.getElementById('word-emoji').textContent=currentWord.emoji||'';
+  document.getElementById('word-hint').textContent=currentWord.hint||'Spell the word!';
+  document.getElementById('result-msg').textContent='';
+      renderSlots();
+  renderTiles();
+  hearWord();
+  }
+
+function hearWord(){
+    Voice.speak(`Can you spell the word: ${currentWord.word}? ${currentWord.word}.`);
+}
+
+function renderSlots(){
+    const slots=document.getElementById('answer-slots');
+  slots.innerHTML='';
+      for(let i=0;i<currentWord.word.length;i++){
+    const div=document.createElement('div');
+    div.className='answer-slot';
+    div.id='slot-'+i;
+    div.textContent=userLetters[i]||'';
+          slots.appendChild(div);
+      }
+}
+
+function renderTiles(){
+    const tiles=document.getElementById('letter-tiles');
+  tiles.innerHTML='';
+      const letters=shuffle(currentWord.word.toUpperCase().split('').concat(shuffle('ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split(''))).slice(0,currentWord.word.length+3));
+  const used=shuffle(letters);
+  used.forEach(l=>{
+    const div=document.createElement('div');
+    div.className='letter-tile';
+    div.textContent=l;
+    div.onclick=()=>placeLetter(l,div);
+    tiles.appendChild(div);
+});
+}
+
+function placeLetter(letter,el){
+  const emptyIdx=userLetters.findIndex(l=>l==='');
+  if(emptyIdx===-1)return;
+  userLetters[emptyIdx]=letter.toLowerCase();
+  el.classList.add('placed');
+  el.onclick=null;
+  renderSlots();
+}
+
+function clearAnswer(){
+  userLetters=new Array(currentWord.word.length).fill('');
+  renderSlots();
+  document.querySelectorAll('.letter-tile').forEach(t=>{t.classList.remove('placed');t.onclick=()=>placeLetter(t.textContent,t);});
+  document.getElementById('result-msg').textContent='';
+}
+
+function checkSpelling(){
+  if(userLetters.some(l=>l==='')){Voice.speak(`You need ${currentWord.word.length} letters ${child}!`);return;}
+  const attempt=userLetters.join('');
+  if(attempt===currentWord.word){
+    const praise=Sophie.praise(child);
+    document.getElementById('result-msg').style.color='#27AE60';
+    document.getElementById('result-msg').textContent=praise;
+    document.getElementById('sophie-msg').textContent=praise;
+    Voice.speak(praise);
+    Progress.addStars(child,2);
+    updateScoreDisplay();
+    Progress.addSubjectProgress(child,'spelling',1);
+    currentIdx++;
+    setTimeout(()=>loadWord(),1500);
+} else {
+    const enc=Sophie.encourage(child);
+    document.getElementById('result-msg').style.color='#E74C3C';
+    document.getElementById('result-msg').textContent=enc+' The word is '+currentWord.word+'!';
+    document.getElementById('sophie-msg').textContent=enc;
+    Voice.speak(enc+' The word is '+currentWord.word+'! Try the next one!');
+    currentIdx++;
+    setTimeout(()=>loadWord(),2000);
+}
+}
+
+initStars(15);
+loadWord();
+</script>
+</body>
+</html>
