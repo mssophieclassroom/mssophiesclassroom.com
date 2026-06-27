@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+  <html lang="en">
+  <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0">
+  <title>Handwriting - Miss Sophie's Classroom</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+  .letter-nav{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin:10px 0;max-width:500px}
+.letter-nav button{background:var(--purple-light);border:2px solid var(--purple);border-radius:10px;padding:8px 12px;font-size:1.1rem;font-weight:800;color:var(--purple-dark);cursor:pointer;transition:all .15s;min-width:42px}
+.letter-nav button:hover,.letter-nav button.active{background:var(--pink);border-color:var(--pink);color:white}
+.letter-nav button.done{background:#ABEBC6;border-color:#27AE60;color:#1E8449}
+.canvas-container{position:relative;width:min(340px,90vw);height:min(260px,50vw);margin:10px auto}
+#drawCanvas{width:100%;height:100%;border-radius:16px;border:3px solid var(--purple-light)}
+.guide-letter{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:clamp(5rem,18vw,7rem);font-weight:900;color:rgba(155,89,182,0.15);pointer-events:none;user-select:none;line-height:1}
+</style>
+  </head>
+  <body>
+  <div class="stars"></div>
+  <div class="page">
+  <div class="topbar">
+  <h1>Handwriting</h1>
+  <a href="index.html" class="home-btn">Home</a>
+  </div>
+  <div class="sophie-wrap">
+  <img src="ms_sophie.png" alt="Miss Sophie" class="sophie-img" style="width:min(120px,28vw)" onerror="this.style.display='none'">
+  <div class="sophie-bubble" id="sophie-msg">Let us practise writing!</div>
+</div>
+<div class="score-bar">
+<span class="star-icon"></span>
+<span id="stars-count">0</span> stars
+  </div>
+  <div style="display:flex;gap:10px;justify-content:center;margin:8px 0;flex-wrap:wrap">
+  <button onclick="setMode('letters')" id="btn-letters" class="big-btn" style="max-width:160px;padding:12px">Letters</button>
+  <button onclick="setMode('numbers')" id="btn-numbers" class="big-btn alt" style="max-width:160px;padding:12px">Numbers</button>
+</div>
+<div class="letter-nav" id="letter-nav"></div>
+  <div class="canvas-container">
+  <canvas id="drawCanvas" width="340" height="260"></canvas>
+  <div class="guide-letter" id="guide-letter">A</div>
+</div>
+  <div class="tool-row">
+  <div class="color-swatch active" style="background:#6C3483" onclick="setColor('#6C3483',this)"></div>
+<div class="color-swatch" style="background:#FF6EB4" onclick="setColor('#FF6EB4',this)"></div>
+  <div class="color-swatch" style="background:#E74C3C" onclick="setColor('#E74C3C',this)"></div>
+  <div class="color-swatch" style="background:#2ECC71" onclick="setColor('#2ECC71',this)"></div>
+  <div class="color-swatch" style="background:#3498DB" onclick="setColor('#3498DB',this)"></div>
+  <div class="color-swatch" style="background:#F39C12" onclick="setColor('#F39C12',this)"></div>
+  </div>
+  <div class="gap-row mt-10">
+  <button class="big-btn green" onclick="clearCanvas()">Clear</button>
+  <button class="big-btn" onclick="doneLetter()">Done!</button>
+</div>
+  </div>
+  <div class="sparkle-cat" onclick="Voice.speak('Purr! Your writing is beautiful!')"></div>
+<script src="sophie.js"></script>
+<script>
+  const child=getCurrentChild();
+updateScoreDisplay();
+Sophie.subject='handwriting';
+const canvas=document.getElementById('drawCanvas');
+const ctx=canvas.getContext('2d');
+let drawing=false;let color='#6C3483';let lineWidth=6;
+let mode='letters';
+let currentItem='A';
+const letters='ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+const numbers=['1','2','3','4','5','6','7','8','9','10'];
+const done=new Set();
+
+ctx.lineCap='round';ctx.lineJoin='round';
+
+function getPos(e){
+  const r=canvas.getBoundingClientRect();
+  const scaleX=canvas.width/r.width;
+  const scaleY=canvas.height/r.height;
+  if(e.touches){return{x:(e.touches[0].clientX-r.left)*scaleX,y:(e.touches[0].clientY-r.top)*scaleY};}
+  return{x:(e.clientX-r.left)*scaleX,y:(e.clientY-r.top)*scaleY};
+}
+canvas.addEventListener('mousedown',e=>{drawing=true;const p=getPos(e);ctx.beginPath();ctx.moveTo(p.x,p.y);});
+canvas.addEventListener('mousemove',e=>{if(!drawing)return;const p=getPos(e);ctx.strokeStyle=color;ctx.lineWidth=lineWidth;ctx.lineTo(p.x,p.y);ctx.stroke();});
+canvas.addEventListener('mouseup',()=>drawing=false);
+canvas.addEventListener('touchstart',e=>{e.preventDefault();drawing=true;const p=getPos(e);ctx.beginPath();ctx.moveTo(p.x,p.y);},{passive:false});
+canvas.addEventListener('touchmove',e=>{e.preventDefault();if(!drawing)return;const p=getPos(e);ctx.strokeStyle=color;ctx.lineWidth=lineWidth;ctx.lineTo(p.x,p.y);ctx.stroke();},{passive:false});
+canvas.addEventListener('touchend',()=>drawing=false);
+
+function clearCanvas(){ctx.clearRect(0,0,canvas.width,canvas.height);}
+function setColor(c,el){color=c;document.querySelectorAll('.color-swatch').forEach(s=>s.classList.remove('active'));el.classList.add('active');}
+
+function setMode(m){
+  mode=m;
+  document.getElementById('btn-letters').classList.toggle('active',m==='letters');
+  document.getElementById('btn-numbers').classList.toggle('active',m==='numbers');
+  buildNav();
+  selectItem(m==='letters'?letters[0]:numbers[0]);
+}
+
+function buildNav(){
+  const nav=document.getElementById('letter-nav');
+  nav.innerHTML='';
+  const items=mode==='letters'?letters:numbers;
+  items.forEach(l=>{
+    const btn=document.createElement('button');
+    btn.textContent=l;
+    if(done.has(l))btn.classList.add('done');
+    if(l===currentItem)btn.classList.add('active');
+    btn.onclick=()=>selectItem(l);
+    nav.appendChild(btn);
+  });
+}
+
+function selectItem(item){
+  currentItem=item;
+  document.getElementById('guide-letter').textContent=item;
+  clearCanvas();
+  buildNav();
+  const msg=`Let us practise the letter ${item}! Trace over the grey letter with your finger!`;
+  document.getElementById('sophie-msg').textContent=msg;
+  Voice.speak(msg);
+}
+
+function doneLetter(){
+  done.add(currentItem);
+  Progress.addStars(child,1);
+  updateScoreDisplay();
+  Progress.addSubjectProgress(child,'handwriting',1);
+  const praise=Sophie.praise(child);
+  document.getElementById('sophie-msg').textContent=praise;
+  Voice.speak(praise);
+  buildNav();
+  const items=mode==='letters'?letters:numbers;
+  const idx=items.indexOf(currentItem);
+  if(idx<items.length-1){setTimeout(()=>selectItem(items[idx+1]),1500);}
+  else{
+      launchConfetti();
+    const msg=`Amazing ${child}! You practised all the ${mode}! You are a superstar writer!`;
+      setTimeout(()=>{document.getElementById('sophie-msg').textContent=msg;Voice.speak(msg);},1500);
+}
+}
+
+initStars(15);
+setMode('letters');
+</script>
+</body>
+</html>
